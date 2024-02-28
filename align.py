@@ -31,8 +31,14 @@ def find_translation(img1, img2):
 
 
 def align(img1, img2):
-    """
-    Takes two unaligned images and returns crops (img1_crop, img2_crop) that are aligned.
+    """Takes two unaligned images and returns crops (img1_crop, img2_crop) that are aligned.
+
+    Args:
+        img1 (ndarray): image 1
+        img2 (ndarray): image 2
+
+    Returns:
+        ndarray, ndarray, translation: the two aligned patches and the (x,y) of the translation
     """
     translation = find_translation(img1, img2)
     img1_crop = img1[max(translation[0], 0): img1.shape[0] + min(translation[0], 0),
@@ -40,7 +46,7 @@ def align(img1, img2):
     img2_crop = img2[max(-translation[0], 0): img1.shape[0] + min(-translation[0], 0),
                      max(-translation[1], 0): img1.shape[1] + min(-translation[1], 0)]
     # assert(img1_crop.shape == img2_crop.shape, "Aligned patches differ in shape")
-    return img1_crop, img2_crop
+    return img1_crop, img2_crop, translation
 
 
 if __name__ == "__main__":

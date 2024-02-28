@@ -67,11 +67,11 @@ def detect_defects(inspect_img, ref_img, demo=False):
         demo (bool, optional): whether to present plots demonstrating the process
 
     Returns:
-        ndaray: a binary mask representing the detection image
+        ndaray: a binary mask representing the detection image. The mask fits the inspected image.
     """
 
     # Extracted aligned patches
-    inspect_crop, ref_crop = align(inspect_img, ref_img)
+    inspect_crop, ref_crop, translation = align(inspect_img, ref_img)
 
     # Match the histogram of the inspected image to that of the reference image
     matched_insepct_crop = histogram_matching(inspect_crop, ref_crop)
@@ -129,11 +129,14 @@ def detect_defects(inspect_img, ref_img, demo=False):
                         [0, 1, 1, 1, 0]], dtype=np.uint8)
     detection = cv2.dilate(detection, kernel, iterations=2)
     detection = cv2.erode(detection, kernel, iterations=2)
-    detection = np.uint8(detection)
+    inplace_detection = np.zeros_like(inspect_img)
+    tr_y, tr_x = max(0, translation[0]), max(0, translation[1])
+    inplace_detection[tr_y:tr_y + detection.shape[0], tr_x:tr_x + detection.shape[1]] = detection
+    inplace_detection = np.uint8(inplace_detection)
 
     # Show the detection signal before and after edge proximity suppression, and the detection mask.
-    fig, axes = plt.subplots(1, 2)
     if demo:
+        fig, axes = plt.subplots(1, 2)
         axes[0].imshow(diff, cmap='plasma', vmin=np.min(suppressed_diff), vmax=np.max(suppressed_diff))
         axes[0].axis('off')
         axes[0].set_title('Simple Diff')
@@ -147,4 +150,4 @@ def detect_defects(inspect_img, ref_img, demo=False):
         plt.title('Detection Mask')
         plt.show()
     
-    return detection
+    return inplace_detection
