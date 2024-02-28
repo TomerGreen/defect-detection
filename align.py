@@ -39,7 +39,7 @@ def align(img1, img2):
                      max(translation[1], 0): img1.shape[1] + min(translation[1], 0)]
     img2_crop = img2[max(-translation[0], 0): img1.shape[0] + min(-translation[0], 0),
                      max(-translation[1], 0): img1.shape[1] + min(-translation[1], 0)]
-    assert(img1_crop.shape == img2_crop.shape, "Aligned patches differ in shape")
+    # assert(img1_crop.shape == img2_crop.shape, "Aligned patches differ in shape")
     return img1_crop, img2_crop
 
 

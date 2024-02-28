@@ -1,46 +1,57 @@
+import os
 import cv2
-import numpy as np
+import argparse
+from detect import detect_defects
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
+
 
 def main():
-    img1 = cv2.imread('./home exercise/non_defective_examples/case3_inspected_image.tif')
-    img2 = cv2.imread('./home exercise/non_defective_examples/case3_reference_image.tif')
-    print(img1.shape)
-    fig, axes = plt.subplots(1, 2)
-    axes[0].imshow(img1)
-    axes[0].axis('off')
-    axes[0].set_title('Non defective inspected')
-    axes[1].imshow(img2)
-    axes[1].axis('off')
-    axes[1].set_title('Non defective reference')
+    """
+    Runs defect detection
+    """
 
-    img1 = cv2.imread('./home exercise/defective_examples/case1_inspected_image.tif')
-    img2 = cv2.imread('./home exercise/defective_examples/case1_reference_image.tif')
-    print(img1.shape)
-    fig, axes = plt.subplots(1, 2)
-    axes[0].imshow(img1)
-    axes[0].axis('off')
-    axes[0].set_title('Non defective inspected')
-    axes[1].imshow(img2)
-    axes[1].axis('off')
-    axes[1].set_title('Non defective reference')
+    # Create ArgumentParser
+    parser = argparse.ArgumentParser(description='Detects defects in a chip image by comparing to a reference image')
 
-    img1 = cv2.imread('./home exercise/defective_examples/case2_inspected_image.tif')
-    img2 = cv2.imread('./home exercise/defective_examples/case2_reference_image.tif')
-    print(img1.shape)
-    fig, axes = plt.subplots(1, 2)
-    axes[0].imshow(img1)
-    axes[0].axis('off')
-    axes[0].set_title('Non defective inspected')
-    axes[1].imshow(img2)
-    axes[1].axis('off')
-    axes[1].set_title('Non defective reference')
+    # Add arguments
+    parser.add_argument('inspect_impath', type=str, help='path to the inspected chip image')
+    parser.add_argument('ref_impath', type=str, help='path to reference chip image')
+    parser.add_argument('--demo', action='store_true', help='whether to present plots along the process')
 
-    # Adjust layout and display images
-    plt.tight_layout()
-    plt.show()
+    # Parse the arguments
+    args = parser.parse_args()
+
+    # Checks the files exist
+    if not os.path.exists(args.inspect_impath):
+        raise FileNotFoundError(f"The file '{args.inspect_impath}' does not exist.")
+    if not os.path.exists(args.ref_impath):
+        raise FileNotFoundError(f"The file '{args.ref_impath}' does not exist.")
+
+    # Get the images
+    inspect_img = cv2.imread(args.inspect_impath, cv2.IMREAD_GRAYSCALE)
+    ref_img = cv2.imread(args.ref_impath, cv2.IMREAD_GRAYSCALE)
+
+    # Run detection
+    detection = detect_defects(inspect_img, ref_img, demo=args.demo)
+    
+    # Save detection image
+    filepath, extension = os.path.splitext(args.inspect_impath)
+    detection_impath = os.path.join(filepath + '_detection' + extension)
+    cv2.imwrite(detection_impath, detection)
+    print(detection_impath)
+
+    # Make sure it worked
+    if os.path.exists(detection_impath):
+        print(f"Detection mask saved in path '{detection_impath}'")
+        # det_img = cv2.imread(detection_impath, cv2.IMREAD_GRAYSCALE)
+        # plt.imshow(det_img, cmap='gray')
+        # plt.axis('off')
+        # plt.tight_layout()
+        # plt.show()
+
+    else:
+        print("Something went wrong. Detection image not saved.")
+
 
 if __name__ == "__main__":
-
     main()

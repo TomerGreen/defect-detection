@@ -6,7 +6,8 @@ from align import align
 
 def histogram_matching(source_img, target_img):
     """
-    Transforms the historgram of the source image such that it is similar to that of the target image.
+    Transforms the colors of the source image such that the histogram is similar to that of the target
+    image.
     """
     # Compute histograms
     source_hist = cv2.calcHist([source_img], [0], None, [256], [0,256])
@@ -63,21 +64,20 @@ def detect_defects(inspect_img, ref_img, demo=False):
     Args:
         inspect_img (ndarray): the chip image
         ref_img (ndarray): the reference chip image
-        demo (bool, optional): Whether 
+        demo (bool, optional): whether to present plots demonstrating the process
+
+    Returns:
+        ndaray: a binary mask representing the detection image
     """
+
+    # Extracted aligned patches
     inspect_crop, ref_crop = align(inspect_img, ref_img)
-    inspect_crop = histogram_matching(inspect_crop, ref_crop)
-    if demo:
-        fig, axes = plt.subplots(1, 2)
-        axes[0].imshow(inspect_crop, cmap='gray')
-        axes[0].axis('off')
-        axes[0].set_title('Inspect Patch')
-        axes[1].imshow(ref_crop, cmap='gray')
-        axes[1].axis('off')
-        axes[1].set_title('Reference Patch')
-        plt.tight_layout()
-        plt.show()
-    smooth_inspect_crop = cv2.bilateralFilter(inspect_crop,
+
+    # Match the histogram of the inspected image to that of the reference image
+    matched_insepct_crop = histogram_matching(inspect_crop, ref_crop)
+
+    # Smooth both images using a color-aware filter
+    smooth_inspect_crop = cv2.bilateralFilter(matched_insepct_crop,
                                               d=SMOOTH_KER_SIZE,
                                               sigmaColor=SIGMA_COLOR,
                                               sigmaSpace=SIGMA_SPACE)
@@ -85,6 +85,8 @@ def detect_defects(inspect_img, ref_img, demo=False):
                                           d=SMOOTH_KER_SIZE,
                                           sigmaColor=SIGMA_COLOR,
                                           sigmaSpace=SIGMA_SPACE)
+    
+    # Present the patches and their preprocessed versions
     if demo:
 
         plt.subplot(2, 2, 1)  # First subplot
@@ -109,25 +111,17 @@ def detect_defects(inspect_img, ref_img, demo=False):
 
         plt.tight_layout()
         plt.show()
-
-        fig, axes = plt.subplots(1, 2)
-        axes[0].imshow(smooth_inspect_crop, cmap='gray')
-        axes[0].axis('off')
-        axes[0].set_title('Inspect After Preprocessing')
-        axes[1].imshow(smooth_ref_crop, cmap='gray')
-        axes[1].axis('off')
-        axes[1].set_title('Reference After Preprocessing')
-        plt.tight_layout()
-        plt.show()
     
+    # Get the detection signal by taking the absolute difference between the images
     diff = np.abs(np.float32(smooth_inspect_crop) - np.float32(smooth_ref_crop))
-    # diff = cv2.bilateralFilter(diff,
-    #                             d=DIFF_SMOOTH_KER_SIZE,
-    #                             sigmaColor=DIFF_SIGMA_COLOR,
-    #                             sigmaSpace=DIFF_SIGMA_SPACE)
-    # diff = cv2.GaussianBlur(diff, (DIFF_SMOOTH_KER_SIZE, DIFF_SMOOTH_KER_SIZE), 0)
+
+    # Suppress the detection signal close to edges 
     suppressed_diff =  diff * edge_proximity_suppression(ref_crop)
+
+    # Binarize the signal using the threshold
     _, detection = cv2.threshold(suppressed_diff, THRESHOLD, 255, cv2.THRESH_BINARY)
+
+    # Use dialation and erosion to connect defect components
     kernel = np.array([[0, 1, 1, 1, 0],
                         [1, 1, 1, 1, 1],
                         [1, 1, 1, 1, 1],
@@ -135,16 +129,22 @@ def detect_defects(inspect_img, ref_img, demo=False):
                         [0, 1, 1, 1, 0]], dtype=np.uint8)
     detection = cv2.dilate(detection, kernel, iterations=2)
     detection = cv2.erode(detection, kernel, iterations=2)
+    detection = np.uint8(detection)
 
+    # Show the detection signal before and after edge proximity suppression, and the detection mask.
     fig, axes = plt.subplots(1, 2)
     if demo:
-        axes[0].imshow(diff, cmap='plasma')
+        axes[0].imshow(diff, cmap='plasma', vmin=np.min(suppressed_diff), vmax=np.max(suppressed_diff))
         axes[0].axis('off')
-        axes[0].set_title('diff')
-        axes[1].imshow(suppressed_diff, cmap='plasma', vmin=np.min(diff), vmax=np.max(diff))
+        axes[0].set_title('Simple Diff')
+        axes[1].imshow(suppressed_diff, cmap='plasma')
         axes[1].axis('off')
-        axes[1].set_title('suppressed diff')
+        axes[1].set_title('Suppressed Diff')
         plt.tight_layout()
         plt.show()
+
         plt.imshow(detection, cmap='gray')
+        plt.title('Detection Mask')
         plt.show()
+    
+    return detection
