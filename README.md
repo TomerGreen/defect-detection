@@ -8,7 +8,7 @@ This project detects defects in chip images
    ```bash
    git clone https://github.com/TomerGreen/defect-detection.git
    ```
-3. Install the requirements:
+3. Navigate to the project and install the requirements:
    ```bash
    pip install -r requirements.txt
    ```
