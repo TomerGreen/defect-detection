@@ -4,8 +4,14 @@ This project detects defects in chip images
 
 ## Installation
 
-1. Clone this repository: git clone https://github.com/TomerGreen/defect-detection.git
-2. Install the requirements: pip install -r requirements.txt
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/TomerGreen/defect-detection.git
+   ```
+3. Install the requirements:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 ## Usage
 
