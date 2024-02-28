@@ -1,0 +1,19 @@
+# Smoothing params
+SMOOTH_KER_SIZE = 3
+SIGMA_COLOR = 50
+SIGMA_SPACE = 200
+
+# Suppressing by edge proximity params
+CANNY_FIRST_THRESHOLD = 100
+CANNY_SECOND_THRESHOLD = 250
+MAX_SUPPRESSION = 1
+SUPPRESSION_DECAY = 3
+
+# Diff smoothing params
+DIFF_SMOOTH_KER_SIZE = 5
+DIFF_SIGMA_COLOR = 100
+DIFF_SIGMA_SPACE = 200
+
+# Detection params
+THRESHOLD = 25
+
